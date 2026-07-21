@@ -29,7 +29,7 @@ if ! grep -q "dev-trio" ~/.tmux.conf 2>/dev/null; then
   cat >> ~/.tmux.conf << 'TMUX'
 
 # --- Dev Trio (Ctrl-b D) — opens kiro, nvim, and shell windows ---
-bind D run-shell "tmux new-window -n kiro 'kiro-cli chat' \; new-window -n nvim 'nvim' \; new-window -n shell"
+bind D run-shell "tmux new-window -n kiro 'kiro-cli chat' \; new-window -n nvim 'nvim' \;"
 TMUX
   tmux source-file ~/.tmux.conf 2>/dev/null && echo "  Tmux binding added (Ctrl-b D)" || echo "  Tmux config updated (reload with: tmux source ~/.tmux.conf)"
 else
