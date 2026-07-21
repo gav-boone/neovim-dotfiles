@@ -17,6 +17,7 @@ return {
           "lua_ls",          -- Lua (for editing nvim config)
         },
         automatic_installation = true,
+        automatic_enable = false,  -- requires Neovim 0.11+; disable for 0.10
       })
 
       local lspconfig = require("lspconfig")
