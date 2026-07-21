@@ -1,0 +1,5 @@
+# Plugin data (managed by lazy.nvim, don't commit)
+nvim/plugin/
+
+# OS files
+.DS_Store
