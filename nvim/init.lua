@@ -1,4 +1,18 @@
--- init.lua — Vanilla Neovim configuration (no plugins)
+-- init.lua — Neovim config with lazy.nvim plugin manager
+
+-- ============================================
+-- BOOTSTRAP LEADER KEY
+-- ============================================
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git", "clone", "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable",
+    lazypath,
+  })
+end
+vim.opt.rtp:prepend(lazypath)
 
 -- ============================================
 -- LEADER KEY
@@ -16,7 +30,7 @@ opt.number = true
 opt.relativenumber = true
 
 -- Tabs & indentation
-opt.tabstop = 2
+opt.tabstop = 4
 opt.shiftwidth = 2
 opt.expandtab = true
 opt.smartindent = true
@@ -43,7 +57,7 @@ opt.clipboard = "unnamedplus"
 opt.splitright = true
 opt.splitbelow = true
 opt.mouse = "a"
-opt.updatetime = 250
+opt.updatetime = 50
 opt.timeoutlen = 300
 
 -- ============================================
@@ -76,3 +90,8 @@ map("x", "<leader>p", '"_dP', { desc = "Paste without overwrite" })
 
 -- Quick close
 map("n", "<leader>q", "<cmd>q<CR>", { desc = "Quit window" })
+
+-- ============================================
+-- KEYMAPS
+-- ============================================
+require("lazy").setup("plugins")
