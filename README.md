@@ -69,6 +69,7 @@ Leader key is `Space`.
 | `<leader>gd` | Git diff split |
 | `<leader>gb` | Git blame |
 | `<leader>gl` | Git log (oneline) |
+| `<leader>gc` | Git commit with message |
 
 Also available: `:Git <command>` for any git operation.
 
