@@ -2,10 +2,11 @@ return {
   -- LSP config
   {
     "neovim/nvim-lspconfig",
+    tag = "v2.4.0",
     event = { "BufReadPre", "BufNewFile" },
     dependencies = {
       "williamboman/mason.nvim",
-      "williamboman/mason-lspconfig.nvim",
+      { "williamboman/mason-lspconfig.nvim", tag = "v1.32.0" },
       "hrsh7th/cmp-nvim-lsp",
     },
     config = function()
