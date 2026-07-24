@@ -18,6 +18,11 @@ cd ~/dotfiles && chmod +x bootstrap.sh && ./bootstrap.sh
 | [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) | Fuzzy finder |
 | [telescope-fzf-native](https://github.com/nvim-telescope/telescope-fzf-native.nvim) | FZF sorter for telescope |
 | [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) | Syntax highlighting & incremental selection |
+| [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) | LSP client configuration |
+| [mason.nvim](https://github.com/williamboman/mason.nvim) | LSP server installer |
+| [mason-lspconfig.nvim](https://github.com/williamboman/mason-lspconfig.nvim) | Bridge between mason and lspconfig |
+| [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) | Autocompletion engine |
+| [LuaSnip](https://github.com/L3MON4D3/LuaSnip) | Snippet engine |
 | [harpoon2](https://github.com/ThePrimeagen/harpoon) | Quick file navigation |
 | [vim-fugitive](https://github.com/tpope/vim-fugitive) | Git commands in vim |
 | [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) | Git signs in gutter, hunk actions |
@@ -88,10 +93,53 @@ Also available: `:Git <command>` for any git operation.
 
 ### Treesitter (incremental selection)
 
+| Key | Mode | Action |
+|-----|------|--------|
+| `<C-space>` | n/v | Init/expand selection |
+| `<BS>` | v | Shrink selection |
+
+### LSP (active when a language server attaches)
+
 | Key | Action |
 |-----|--------|
-| `<C-space>` | Init/expand selection |
-| `<BS>` | Shrink selection |
+| `gd` | Go to definition |
+| `gr` | Go to references |
+| `gI` | Go to implementation |
+| `gD` | Go to declaration |
+| `K` | Hover documentation |
+| `<leader>ca` | Code action |
+| `<leader>rn` | Rename symbol |
+| `<leader>D` | Type definition |
+| `<leader>ds` | Document symbols |
+| `<leader>e` | Show diagnostic (float) |
+| `[d` | Previous diagnostic |
+| `]d` | Next diagnostic |
+
+Format on save is enabled globally.
+
+### Completion (nvim-cmp, insert mode)
+
+| Key | Action |
+|-----|--------|
+| `<C-n>` | Select next item |
+| `<C-p>` | Select previous item |
+| `<C-d>` | Scroll docs up |
+| `<C-f>` | Scroll docs down |
+| `<C-Space>` | Trigger completion |
+| `<CR>` | Confirm selection |
+| `<Tab>` | Next item / expand snippet / indent |
+| `<S-Tab>` | Previous item / jump snippet back |
+
+Note: `<C-Space>` and `<C-d>` are also used in normal mode (Treesitter selection and centered scrolling respectively). No conflict — nvim-cmp bindings are insert-mode only.
+
+### LSP Servers (auto-installed via Mason)
+
+| Server | Language |
+|--------|----------|
+| ts_ls | TypeScript / JavaScript |
+| lua_ls | Lua |
+| basedpyright | Python (types, completions, hover) |
+| ruff | Python (linting, formatting) |
 
 ## Treesitter Languages
 
