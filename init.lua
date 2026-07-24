@@ -104,5 +104,9 @@ vim.g.loaded_ruby_provider = 0
 -- ============================================
 require("lazy").setup("plugins", {
   rocks = { enabled = false },
+  git = {
+    filter = true,
+  },
+  concurrency = 16,
 })
 
