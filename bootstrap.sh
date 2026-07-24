@@ -24,6 +24,14 @@ else
   echo "  ripgrep and fd already installed"
 fi
 
+echo "=== Installing language servers ==="
+if ! command -v basedpyright-langserver &>/dev/null; then
+  pip install -q basedpyright
+  echo "  basedpyright installed"
+else
+  echo "  basedpyright already installed"
+fi
+
 echo "=== Linking Neovim config ==="
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p ~/.config
