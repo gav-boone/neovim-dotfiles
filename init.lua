@@ -92,7 +92,17 @@ map("x", "<leader>p", '"_dP', { desc = "Paste without overwrite" })
 map("n", "<leader>q", "<cmd>q<CR>", { desc = "Quit window" })
 
 -- ============================================
--- KEYMAPS
+-- DISABLE UNUSED PROVIDERS
 -- ============================================
-require("lazy").setup("plugins")
+vim.g.loaded_python3_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
+
+-- ============================================
+-- PLUGINS
+-- ============================================
+require("lazy").setup("plugins", {
+  rocks = { enabled = false },
+})
 

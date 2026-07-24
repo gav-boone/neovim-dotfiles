@@ -1,8 +1,11 @@
 return {
   "nvim-treesitter/nvim-treesitter",
-  branch = "master",
+  tag = "v0.9.3",
   build = ":TSUpdate",
   config = function()
+    -- Use git instead of tarball to avoid ownership errors in containers
+    require("nvim-treesitter.install").prefer_git = true
+
     require("nvim-treesitter.configs").setup({
       ensure_installed = {
         "lua", "typescript", "tsx", "javascript",
@@ -20,8 +23,5 @@ return {
         },
       },
     })
-
-    -- Use git instead of tarball to avoid ownership errors in containers
-    require("nvim-treesitter.install").prefer_git = true
   end,
 }
