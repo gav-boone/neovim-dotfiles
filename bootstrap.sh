@@ -17,8 +17,8 @@ fi
 echo "=== Linking Neovim config ==="
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p ~/.config
-ln -sfn "$SCRIPT_DIR/nvim" ~/.config/nvim
-echo "  Linked ~/.config/nvim -> $SCRIPT_DIR/nvim"
+ln -sfn "$SCRIPT_DIR" ~/.config/nvim
+echo "  Linked ~/.config/nvim -> $SCRIPT_DIR"
 
 echo "=== Installing plugins ==="
 nvim --headless "+Lazy! sync" +qa 2>/dev/null
