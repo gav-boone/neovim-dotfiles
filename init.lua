@@ -95,3 +95,4 @@ map("n", "<leader>q", "<cmd>q<CR>", { desc = "Quit window" })
 -- KEYMAPS
 -- ============================================
 require("lazy").setup("plugins")
+
