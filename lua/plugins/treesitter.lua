@@ -10,6 +10,7 @@ return {
       ensure_installed = {
         "lua", "typescript", "tsx", "javascript",
         "python", "json", "html", "css", "bash", "markdown",
+        "dart", "yaml",
       },
       highlight = { enable = true },
       indent = { enable = true },

@@ -25,9 +25,17 @@ vim.g.maplocalleader = " "
 -- ============================================
 local opt = vim.opt
 
+-- Shell (use bash when running from Git Bash)
+if vim.fn.executable('bash') == 1 and vim.fn.has('win32') == 1 then
+  opt.shell = 'bash'
+  opt.shellcmdflag = '-c'
+  opt.shellquote = ''
+  opt.shellxquote = ''
+end
+
 -- Line numbers
 opt.number = true
-opt.relativenumber = true
+opt.relativenumber = false
 
 -- Tabs & indentation
 opt.tabstop = 4

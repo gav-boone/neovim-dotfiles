@@ -20,6 +20,7 @@ return {
           "lua_ls",       -- Lua
           "basedpyright", -- Python type checking, completions, hover
           "ruff",         -- Python linting + formatting
+          "clangd",       -- C/C++
         },
       })
 
@@ -85,6 +86,17 @@ return {
             },
           })
         end,
+        -- clangd: C/C++ with MinGW query-driver
+        ["clangd"] = function()
+          lspconfig.clangd.setup({
+            capabilities = capabilities,
+            on_attach = on_attach,
+            cmd = {
+              "clangd",
+              "--query-driver=C:/Users/GBOONE/mingw64/bin/g++.exe",
+            },
+          })
+        end,
         -- ruff: linting + formatting
         ["ruff"] = function()
           lspconfig.ruff.setup({
@@ -98,12 +110,7 @@ return {
         end,
       })
 
-      -- Format on save (uses ruff for Python, ts_ls for TS, etc.)
-      vim.api.nvim_create_autocmd("BufWritePre", {
-        callback = function()
-          vim.lsp.buf.format({ async = false })
-        end,
-      })
+      -- Format on save is handled by conform.nvim (see below)
     end,
   },
 
