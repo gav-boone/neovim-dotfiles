@@ -3,3 +3,5 @@ nvim/plugin/
 
 # OS files
 .DS_Store
+
+lazy-lock.json
