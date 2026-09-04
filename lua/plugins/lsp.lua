@@ -74,6 +74,12 @@ return {
         end,
         -- basedpyright: type checking + completions, disable its formatting
         ["basedpyright"] = function()
+          -- basedpyright was crashing on startup with "JavaScript heap out of
+          -- memory". Root cause was SCOPE, not a genuinely large project: it
+          -- was recursively analyzing the whole workspace (including .venv
+          -- site-packages and large stub trees like pywin32), ballooning the
+          -- analysis set. The fix is to bound what it analyzes, not to throw
+          -- more RAM at it.
           lspconfig.basedpyright.setup({
             capabilities = capabilities,
             on_attach = on_attach,
@@ -81,6 +87,18 @@ return {
               basedpyright = {
                 analysis = {
                   typeCheckingMode = "standard",
+                  -- Only analyze files you actually open, not the whole tree.
+                  diagnosticMode = "openFilesOnly",
+                  useLibraryCodeForTypes = true,
+                  -- Don't index the virtualenv or other heavy directories.
+                  exclude = {
+                    "**/node_modules",
+                    "**/__pycache__",
+                    "**/.venv",
+                    "**/.git",
+                    "**/dist",
+                    "**/build",
+                  },
                 },
               },
             },
@@ -93,7 +111,7 @@ return {
             on_attach = on_attach,
             cmd = {
               "clangd",
-              "--query-driver=C:/Users/GBOONE/mingw64/bin/g++.exe",
+              "--query-driver=C:/Users/GBOONE/mingw64/bin/*",
             },
           })
         end,

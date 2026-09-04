@@ -26,6 +26,12 @@ cd ~/dotfiles && chmod +x bootstrap.sh && ./bootstrap.sh
 | [harpoon2](https://github.com/ThePrimeagen/harpoon) | Quick file navigation |
 | [vim-fugitive](https://github.com/tpope/vim-fugitive) | Git commands in vim |
 | [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) | Git signs in gutter, hunk actions |
+| [conform.nvim](https://github.com/stevearc/conform.nvim) | Code formatter (format on save + manual) |
+| [mason-conform.nvim](https://github.com/zapling/mason-conform.nvim) | Auto-install formatters via Mason |
+| [flutter-tools.nvim](https://github.com/akinsho/flutter-tools.nvim) | Flutter development tools & LSP |
+| [render-markdown.nvim](https://github.com/MeanderingProgrammer/render-markdown.nvim) | Render markdown in-buffer |
+| [nvim-autopairs](https://github.com/windwp/nvim-autopairs) | Auto-close brackets/quotes |
+| [nvim-colorizer.lua](https://github.com/norcalli/nvim-colorizer.lua) | Inline color highlighting |
 | [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) | Lua utility library (dependency) |
 
 ## Key Bindings
@@ -132,6 +138,39 @@ Format on save is enabled globally.
 
 Note: `<C-Space>` and `<C-d>` are also used in normal mode (Treesitter selection and centered scrolling respectively). No conflict — nvim-cmp bindings are insert-mode only.
 
+### Conform (formatting)
+
+| Key | Action |
+|-----|--------|
+| `<leader>f` | Format buffer (any mode) |
+
+Format on save is also enabled globally (2s timeout, LSP fallback).
+
+### Flutter (dart files only)
+
+| Key | Action |
+|-----|--------|
+| `<leader>fr` | Flutter run |
+| `<leader>fq` | Flutter quit |
+| `<leader>fR` | Flutter restart |
+| `<leader>fd` | Flutter devices |
+| `<leader>fo` | Flutter outline toggle |
+| `<leader>fl` | Flutter LSP restart |
+
+Standard LSP keymaps (gd, gr, K, etc.) also attach in dart buffers.
+
+### Markdown (render-markdown.nvim)
+
+| Key | Action |
+|-----|--------|
+| `<leader>mr` | Toggle markdown render |
+
+### Autopairs
+
+| Key | Mode | Action |
+|-----|------|--------|
+| `<M-e>` | i | Fast wrap (surround next word with pair) |
+
 ### LSP Servers (auto-installed via Mason)
 
 | Server | Language |
@@ -140,10 +179,12 @@ Note: `<C-Space>` and `<C-d>` are also used in normal mode (Treesitter selection
 | lua_ls | Lua |
 | basedpyright | Python (types, completions, hover) |
 | ruff | Python (linting, formatting) |
+| clangd | C / C++ |
+| dart (flutter-tools) | Dart / Flutter |
 
 ## Treesitter Languages
 
-lua, typescript, tsx, javascript, python, json, html, css, bash, markdown
+lua, typescript, tsx, javascript, python, json, html, css, bash, markdown, dart, yaml
 
 ## tmux Dev Trio
 
