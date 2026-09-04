@@ -24,6 +24,17 @@ return {
         javascript = { "lsp" },
         lua = { "lsp" },
       },
+      -- Override the ruff_format command. The Mason-installed ruff.exe takes
+      -- ~5s to launch on this machine (Defender scans that specific 25MB
+      -- binary on every spawn), which blows past the format-on-save timeout.
+      -- uvx runs an equivalent ruff (same version) from uv's cache in <600ms,
+      -- so we invoke ruff through uvx instead.
+      formatters = {
+        ruff_format = {
+          command = vim.fn.expand("~/.local/bin/uvx"),
+          prepend_args = { "ruff" },
+        },
+      },
       format_on_save = {
         timeout_ms = 2000,
         lsp_fallback = true,
