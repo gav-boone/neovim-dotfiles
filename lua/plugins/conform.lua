@@ -38,6 +38,14 @@ return {
       "stevearc/conform.nvim",
       "williamboman/mason.nvim",
     },
-    opts = {},
+    opts = {
+      -- Don't let mason-conform try to install these:
+      --  * "lsp"         — not a real formatter, resolves to the attached LSP client
+      --  * "ruff_format" — ruff is provided via conda (bootstrap.sh), not Mason
+      --  * "clang-format"— installed/managed separately
+      -- Attempting to install non-Mason/pseudo formatters triggers a nil-index
+      -- error in mason-conform's install path.
+      ignore_install = { "lsp", "ruff_format", "clang-format" },
+    },
   },
 }

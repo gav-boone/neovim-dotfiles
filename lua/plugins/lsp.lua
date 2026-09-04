@@ -72,6 +72,11 @@ return {
             },
           })
         end,
+        -- pyright: disabled. We use basedpyright as the single Python type
+        -- checker. A stray pyright package in Mason would otherwise be
+        -- auto-configured by the default handler and attach alongside
+        -- basedpyright, causing duplicate diagnostics/hover/completions.
+        ["pyright"] = function() end,
         -- basedpyright: type checking + completions, disable its formatting
         ["basedpyright"] = function()
           -- basedpyright was crashing on startup with "JavaScript heap out of
