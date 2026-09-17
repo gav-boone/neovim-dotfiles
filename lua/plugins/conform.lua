@@ -9,35 +9,29 @@ return {
       {
         "<leader>f",
         function()
-          require("conform").format({ async = false, lsp_fallback = true })
+          require("conform").format({ async = false, lsp_format = "prefer" })
         end,
         mode = "",
         desc = "Format buffer",
       },
     },
     opts = {
+      -- Only real CLI formatters belong in this map. LSP-driven formatting is
+      -- NOT a formatter here — "lsp" is not a valid formatter name (conform
+      -- FAQ: you cannot define an "lsp" formatter). It's controlled by the
+      -- lsp_format option below. Filetypes with no entry here (python, ts,
+      -- js, lua) fall through to LSP formatting via default_format_opts.
       formatters_by_ft = {
         c = { "clang-format" },
         cpp = { "clang-format" },
-        python = { "ruff_format" },
-        typescript = { "lsp" },
-        javascript = { "lsp" },
-        lua = { "lsp" },
       },
-      -- Override the ruff_format command. The Mason-installed ruff.exe takes
-      -- ~5s to launch on this machine (Defender scans that specific 25MB
-      -- binary on every spawn), which blows past the format-on-save timeout.
-      -- uvx runs an equivalent ruff (same version) from uv's cache in <600ms,
-      -- so we invoke ruff through uvx instead.
-      formatters = {
-        ruff_format = {
-          command = vim.fn.expand("~/.local/bin/uvx"),
-          prepend_args = { "ruff" },
-        },
+      -- Prefer the attached LSP for formatting whenever one is available.
+      -- Applies to every conform.format() call (including format_on_save).
+      default_format_opts = {
+        lsp_format = "prefer",
       },
       format_on_save = {
         timeout_ms = 2000,
-        lsp_fallback = true,
       },
     },
   },
