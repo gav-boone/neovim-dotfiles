@@ -32,6 +32,7 @@ do
             "C:\\Users\\gboone\\Programs\\mingw64\\bin",
             "C:\\Users\\gboone\\Programs\\clang+llvm-23.1.4-x86_64-pc-windows-msvc\\bin",
             "C:\\Users\\gboone\\Programs\\node-v24.22.1-win-x64",
+            "C:\\Users\\gboone\\Programs\\tree-sitter",
         }
 
     -- Python: the `python` on PATH is the Windows Store 0-byte app-execution
