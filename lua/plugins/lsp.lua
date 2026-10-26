@@ -2,18 +2,111 @@ return {
   -- LSP config
   {
     "neovim/nvim-lspconfig",
-    tag = "v2.4.0",
+    tag = "v2.12.0",
     event = { "BufReadPre", "BufNewFile" },
     dependencies = {
       "williamboman/mason.nvim",
-      { "williamboman/mason-lspconfig.nvim", tag = "v1.32.0" },
+      { "williamboman/mason-lspconfig.nvim", tag = "v2.3.0" },
       "hrsh7th/cmp-nvim-lsp",
     },
     config = function()
-      -- Setup mason first (manages LSP server installs)
-      require("mason").setup()
+      -- mason itself is set up eagerly in lua/plugins/mason.lua (so :Mason
+      -- and friends always exist). Here we only wire up the LSP servers.
 
-      -- Bridge between mason and lspconfig
+      -- Shared capabilities (enables completion via nvim-cmp)
+      local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+      -- Shared on_attach for keymaps. Attached via LspAttach autocmd below so
+      -- it applies to every server regardless of how it's enabled.
+      vim.api.nvim_create_autocmd("LspAttach", {
+        callback = function(ev)
+          local bufnr = ev.buf
+          local map = function(keys, func, desc)
+            vim.keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
+          end
+
+          map("gd", vim.lsp.buf.definition, "Go to definition")
+          map("gr", vim.lsp.buf.references, "Go to references")
+          map("gI", vim.lsp.buf.implementation, "Go to implementation")
+          map("K", vim.lsp.buf.hover, "Hover documentation")
+          map("<leader>ca", vim.lsp.buf.code_action, "Code action")
+          map("<leader>rn", vim.lsp.buf.rename, "Rename symbol")
+          map("<leader>D", vim.lsp.buf.type_definition, "Type definition")
+          map("gD", vim.lsp.buf.declaration, "Go to declaration")
+          map("<leader>ds", vim.lsp.buf.document_symbol, "Document symbols")
+          map("[d", function() vim.diagnostic.jump({ count = -1 }) end, "Previous diagnostic")
+          map("]d", function() vim.diagnostic.jump({ count = 1 }) end, "Next diagnostic")
+          map("<leader>e", vim.diagnostic.open_float, "Show diagnostic")
+
+          -- ruff: let basedpyright own hover, disable ruff's.
+          local client = vim.lsp.get_client_by_id(ev.data.client_id)
+          if client and client.name == "ruff" then
+            client.server_capabilities.hoverProvider = false
+          end
+        end,
+      })
+
+      -- Per-server settings. On nvim 0.11+ servers are configured with
+      -- vim.lsp.config(name, opts); these merge on top of the default configs
+      -- shipped by nvim-lspconfig. mason-lspconfig v2 (no more setup_handlers)
+      -- auto-enables installed servers for us.
+      vim.lsp.config("*", { capabilities = capabilities })
+
+      vim.lsp.config("lua_ls", {
+        settings = {
+          Lua = {
+            diagnostics = { globals = { "vim" } },
+            workspace = { checkThirdParty = false },
+            telemetry = { enable = false },
+          },
+        },
+      })
+
+      -- basedpyright: bound analysis scope to avoid OOM from indexing the whole
+      -- workspace (.venv/site-packages, large stub trees).
+      vim.lsp.config("basedpyright", {
+        settings = {
+          basedpyright = {
+            analysis = {
+              typeCheckingMode = "standard",
+              diagnosticMode = "openFilesOnly",
+              useLibraryCodeForTypes = true,
+              exclude = {
+                "**/node_modules",
+                "**/__pycache__",
+                "**/.venv",
+                "**/.git",
+                "**/dist",
+                "**/build",
+              },
+            },
+          },
+        },
+      })
+
+      -- clangd: point it at the portable MinGW toolchain. clangd does not
+      -- auto-discover WinLibs mingw's header/lib paths (standard headers live
+      -- under mingw64\x86_64-w64-mingw32\include, and C++ headers under
+      -- mingw64\include\c++\<ver>), so without --query-driver it fails to find
+      -- <stdio.h>/<string.h> etc. --query-driver lets clangd interrogate gcc
+      -- for its system include + library search paths.
+      do
+        local mingw = "C:/Users/gboone/Programs/mingw64"
+        local gcc = mingw .. "/bin/gcc.exe"
+        if vim.fn.filereadable(gcc) == 1 then
+          vim.lsp.config("clangd", {
+            cmd = {
+              "clangd",
+              "--query-driver=" .. mingw .. "/bin/*",
+              "--background-index",
+              "--clang-tidy",
+            },
+          })
+        end
+      end
+
+      -- Bridge mason -> lsp. v2 auto-enables servers it installs; pyright is
+      -- intentionally omitted so it never attaches alongside basedpyright.
       require("mason-lspconfig").setup({
         ensure_installed = {
           "ts_ls",        -- TypeScript/JavaScript
@@ -22,115 +115,9 @@ return {
           "ruff",         -- Python linting + formatting
           "clangd",       -- C/C++
         },
-      })
-
-      -- Shared capabilities (enables completion via nvim-cmp)
-      local capabilities = require("cmp_nvim_lsp").default_capabilities()
-
-      -- Shared on_attach for keymaps
-      local on_attach = function(_, bufnr)
-        local map = function(keys, func, desc)
-          vim.keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
-        end
-
-        map("gd", vim.lsp.buf.definition, "Go to definition")
-        map("gr", vim.lsp.buf.references, "Go to references")
-        map("gI", vim.lsp.buf.implementation, "Go to implementation")
-        map("K", vim.lsp.buf.hover, "Hover documentation")
-        map("<leader>ca", vim.lsp.buf.code_action, "Code action")
-        map("<leader>rn", vim.lsp.buf.rename, "Rename symbol")
-        map("<leader>D", vim.lsp.buf.type_definition, "Type definition")
-        map("gD", vim.lsp.buf.declaration, "Go to declaration")
-        map("<leader>ds", vim.lsp.buf.document_symbol, "Document symbols")
-        map("[d", vim.diagnostic.goto_prev, "Previous diagnostic")
-        map("]d", vim.diagnostic.goto_next, "Next diagnostic")
-        map("<leader>e", vim.diagnostic.open_float, "Show diagnostic")
-      end
-
-      -- Setup each server
-      local lspconfig = require("lspconfig")
-
-      require("mason-lspconfig").setup_handlers({
-        -- Default handler for all servers
-        function(server_name)
-          lspconfig[server_name].setup({
-            capabilities = capabilities,
-            on_attach = on_attach,
-          })
-        end,
-        -- Custom handler for lua_ls (suppress vim global warnings)
-        ["lua_ls"] = function()
-          lspconfig.lua_ls.setup({
-            capabilities = capabilities,
-            on_attach = on_attach,
-            settings = {
-              Lua = {
-                diagnostics = { globals = { "vim" } },
-                workspace = { checkThirdParty = false },
-                telemetry = { enable = false },
-              },
-            },
-          })
-        end,
-        -- pyright: disabled. We use basedpyright as the single Python type
-        -- checker. A stray pyright package in Mason would otherwise be
-        -- auto-configured by the default handler and attach alongside
-        -- basedpyright, causing duplicate diagnostics/hover/completions.
-        ["pyright"] = function() end,
-        -- basedpyright: type checking + completions, disable its formatting
-        ["basedpyright"] = function()
-          -- basedpyright was crashing on startup with "JavaScript heap out of
-          -- memory". Root cause was SCOPE, not a genuinely large project: it
-          -- was recursively analyzing the whole workspace (including .venv
-          -- site-packages and large stub trees like pywin32), ballooning the
-          -- analysis set. The fix is to bound what it analyzes, not to throw
-          -- more RAM at it.
-          lspconfig.basedpyright.setup({
-            capabilities = capabilities,
-            on_attach = on_attach,
-            settings = {
-              basedpyright = {
-                analysis = {
-                  typeCheckingMode = "standard",
-                  -- Only analyze files you actually open, not the whole tree.
-                  diagnosticMode = "openFilesOnly",
-                  useLibraryCodeForTypes = true,
-                  -- Don't index the virtualenv or other heavy directories.
-                  exclude = {
-                    "**/node_modules",
-                    "**/__pycache__",
-                    "**/.venv",
-                    "**/.git",
-                    "**/dist",
-                    "**/build",
-                  },
-                },
-              },
-            },
-          })
-        end,
-        -- clangd: C/C++ with MinGW query-driver
-        ["clangd"] = function()
-          lspconfig.clangd.setup({
-            capabilities = capabilities,
-            on_attach = on_attach,
-            cmd = {
-              "clangd",
-              "--query-driver=C:/Users/GBOONE/mingw64/bin/*",
-            },
-          })
-        end,
-        -- ruff: linting + formatting
-        ["ruff"] = function()
-          lspconfig.ruff.setup({
-            capabilities = capabilities,
-            on_attach = function(client, bufnr)
-              -- Disable ruff's hover (let basedpyright handle it)
-              client.server_capabilities.hoverProvider = false
-              on_attach(client, bufnr)
-            end,
-          })
-        end,
+        automatic_enable = {
+          exclude = { "pyright" },
+        },
       })
 
       -- Format on save is handled by conform.nvim (see below)
