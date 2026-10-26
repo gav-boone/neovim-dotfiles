@@ -29,9 +29,10 @@ vim.g.maplocalleader = " "
 -- treesitter reports "No C compiler found" even though gcc/clang are installed.
 do
     local tool_bins = {
-        "C:\\Users\\gboone\\Programs\\mingw64\\bin",
-        "C:\\Users\\gboone\\Programs\\clang+llvm-23.1.4-x86_64-pc-windows-msvc\\bin",
-    }
+            "C:\\Users\\gboone\\Programs\\mingw64\\bin",
+            "C:\\Users\\gboone\\Programs\\clang+llvm-23.1.4-x86_64-pc-windows-msvc\\bin",
+            "C:\\Users\\gboone\\Programs\\node-v24.22.1-win-x64",
+        }
 
     -- Python: the `python` on PATH is the Windows Store 0-byte app-execution
     -- alias, which mason and LSP tooling (pyright/basedpyright) can't resolve
