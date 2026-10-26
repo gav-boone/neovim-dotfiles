@@ -21,16 +21,77 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
 -- ============================================
+-- TOOLCHAIN ON PATH
+-- ============================================
+-- Ensure the C toolchain is always visible to nvim, regardless of how nvim was
+-- launched (GUI shortcut, terminal, etc.). Required by nvim-treesitter to
+-- compile parsers and by telescope-fzf-native's build step. Without this,
+-- treesitter reports "No C compiler found" even though gcc/clang are installed.
+do
+    local tool_bins = {
+        "C:\\Users\\gboone\\Programs\\mingw64\\bin",
+        "C:\\Users\\gboone\\Programs\\clang+llvm-23.1.4-x86_64-pc-windows-msvc\\bin",
+    }
+
+    -- Python: the `python` on PATH is the Windows Store 0-byte app-execution
+    -- alias, which mason and LSP tooling (pyright/basedpyright) can't resolve
+    -- as a real interpreter. The genuine python.exe lives in the WindowsApps
+    -- package dir. Resolve it dynamically (the version is in the folder name
+    -- and changes on update) and put it ahead of the stub so `python`/`pip`
+    -- point at a real executable. Prefers a standard on-disk install if one
+    -- exists.
+    do
+        local candidates = {}
+        -- Standard per-user install (if the user ever installs non-Store Python)
+        vim.list_extend(candidates, vim.fn.glob(
+            vim.fn.expand("$LOCALAPPDATA") .. "\\Programs\\Python\\Python3*", true, true))
+        -- Store package real install dir (has a real python.exe, not the alias)
+        vim.list_extend(candidates, vim.fn.glob(
+            "C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3*_x64__*", true, true))
+        -- Pick the newest (glob sorts ascending, so take the last match).
+        for i = #candidates, 1, -1 do
+            local dir = candidates[i]
+            if vim.fn.filereadable(dir .. "\\python.exe") == 1 then
+                table.insert(tool_bins, dir)
+                -- pip-installed console scripts live under Scripts/
+                if vim.fn.isdirectory(dir .. "\\Scripts") == 1 then
+                    table.insert(tool_bins, dir .. "\\Scripts")
+                end
+                break
+            end
+        end
+    end
+
+    local sep = ";"
+    local path = vim.env.PATH or ""
+    for _, dir in ipairs(tool_bins) do
+        if vim.fn.isdirectory(dir) == 1 and not path:find(dir, 1, true) then
+            path = dir .. sep .. path
+        end
+    end
+    vim.env.PATH = path
+end
+
+-- ============================================
 -- CORE OPTIONS
 -- ============================================
 local opt = vim.opt
 
--- Shell (use bash when running from Git Bash)
-if vim.fn.executable('bash') == 1 and vim.fn.has('win32') == 1 then
-    opt.shell = 'bash'
-    opt.shellcmdflag = '-c'
-    opt.shellquote = ''
-    opt.shellxquote = ''
+-- Shell
+-- Force a native Windows shell for vim.fn.system()/build commands. The
+-- environment here exports SHELL=C:\Program Files\Git\usr\bin\bash.exe (MSYS
+-- bash), which nvim would otherwise adopt as &shell. That MSYS bash only works
+-- inside the Git-Bash environment; when native nvim drives it for plugin
+-- builds (treesitter parser compiles, git clones) it fails with
+-- "/usr/bin/bash: No such file or directory". Pinning &shell to cmd.exe keeps
+-- all tool subprocesses on a native, working shell.
+if vim.fn.has("win32") == 1 then
+    opt.shell = "cmd.exe"
+    opt.shellcmdflag = "/s /c"
+    opt.shellquote = ""
+    opt.shellxquote = ""
+    opt.shellredir = ">%s 2>&1"
+    opt.shellpipe = ">%s 2>&1"
 end
 
 -- Line numbers
@@ -179,6 +240,33 @@ end, {
     nargs = "*",
     complete = "shellcmd",
     desc = "Run the configured build script (set via vim.g.build_cmd or :Build <cmd>)",
+})
+
+-- <leader>b — run :Build with the configured build command.
+map("n", "<leader>b", "<cmd>Build<CR>", { desc = "Run build command" })
+
+-- ============================================
+-- DIAGNOSTICS DISPLAY
+-- ============================================
+-- On Neovim 0.11+ virtual_text is OFF by default, so diagnostics only show a
+-- sign + underline with no inline message text. Turn on virtual_text (the
+-- message shown to the right of the line) plus readable floats/signs.
+vim.diagnostic.config({
+    virtual_text = {
+        spacing = 4,
+        prefix = "●",
+        source = "if_many",
+    },
+    signs = true,
+    underline = true,
+    update_in_insert = false,
+    severity_sort = true,
+    float = {
+        border = "rounded",
+        source = true,
+        header = "",
+        prefix = "",
+    },
 })
 
 -- ============================================
