@@ -1,6 +1,10 @@
 return {
   "nvim-treesitter/nvim-treesitter",
-  tag = "v0.9.3",
+  -- Pin to the stable `master` branch. The `main` branch rewrite requires the
+  -- external `tree-sitter` CLI to compile parsers; `master` compiles them with
+  -- a plain C compiler (gcc/clang on PATH) and ships the classic
+  -- `nvim-treesitter.configs` setup API used below.
+  branch = "master",
   build = ":TSUpdate",
   config = function()
     -- Use git instead of tarball to avoid ownership errors in containers
