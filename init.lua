@@ -229,7 +229,23 @@ vim.api.nvim_create_user_command("Build", function(args)
     vim.notify("Building: " .. cmd, vim.log.levels.INFO)
     -- Run the build and send output to the quickfix list so errors are
     -- navigable with :copen and ]q / [q.
-    local output = vim.fn.systemlist(cmd)
+    --
+    -- &shell is pinned to cmd.exe (so plugin/git subprocesses don't break on
+    -- the MSYS bash in this environment). cmd.exe can't execute shell scripts,
+    -- so if the build command is (or starts with) a .sh script, run it through
+    -- bash explicitly instead of the default shell.
+    local run = cmd
+    local script = cmd:match("^%s*%.?/?([%w_%-./]+%.sh)") or (cmd:match("%.sh%s*$") and cmd)
+    if script then
+        local bash = vim.fn.exepath("bash")
+        if bash == "" then
+            bash = "C:/Program Files/Git/bin/bash.exe"
+        end
+        -- Invoke via bash -lc so the script's shebang/login PATH apply. Quote
+        -- the whole user command for bash -c.
+        run = { bash, "-lc", cmd }
+    end
+    local output = vim.fn.systemlist(run)
     vim.fn.setqflist({}, " ", { title = "Build: " .. cmd, lines = output })
     if vim.v.shell_error ~= 0 then
         vim.cmd("copen")
