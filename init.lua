@@ -236,15 +236,24 @@ vim.api.nvim_create_user_command("Build", function(args)
     -- so if the build command is (or starts with) a .sh script, run it through
     -- bash explicitly instead of the default shell.
     local run = cmd
-    local script = cmd:match("^%s*%.?/?([%w_%-./]+%.sh)") or (cmd:match("%.sh%s*$") and cmd)
-    if script then
+    local nu_script = cmd:match("^%s*%.?/?[%w_%-./]+%.nu") or cmd:match("%.nu%s*$")
+    local sh_script = cmd:match("^%s*%.?/?[%w_%-./]+%.sh") or cmd:match("%.sh%s*$")
+    if nu_script then
+        local nu = vim.fn.exepath("nu")
+        if nu == "" then
+            nu = "C:/Users/gboone/AppData/Local/Programs/nu/bin/nu.exe"
+        end
+        run = { nu, cmd }
+    elseif sh_script then
         local bash = vim.fn.exepath("bash")
         if bash == "" then
-            bash = "C:/Program Files/Git/bin/bash.exe"
+            bash = "C:/Program Files/Git/usr/bin/bash.exe"
         end
-        -- Invoke via bash -lc so the script's shebang/login PATH apply. Quote
-        -- the whole user command for bash -c.
-        run = { bash, "-lc", cmd }
+        -- Invoke via bash -c. Login shell (-l) is not needed: nvim inherits
+        -- PATH from the launching shell (nushell/env.nu), which already has
+        -- clang, mingw64, node, etc. Using -l sources /etc/profile.d/*.sh and
+        -- adds ~2 s of Defender-scanned startup overhead for no benefit.
+        run = { bash, "-c", cmd }
     end
     local output = vim.fn.systemlist(run)
     vim.fn.setqflist({}, " ", { title = "Build: " .. cmd, lines = output })
