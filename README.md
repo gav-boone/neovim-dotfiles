@@ -23,8 +23,7 @@ Personal Neovim config
 | [vim-fugitive](https://github.com/tpope/vim-fugitive) | Git commands in vim |
 | [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) | Git signs in gutter, hunk actions |
 | [nvim-autopairs](https://github.com/windwp/nvim-autopairs) | Auto-close brackets/quotes |
-| [nvim-colorizer.lua](https://github.com/norcalli/nvim-colorizer.lua) | Inline color highlighting |
-| [dressing.nvim](https://github.com/stevearc/dressing.nvim) | Better UI for vim.ui.input/select |
+| [nvim-colorizer.lua](https://github.com/catgoose/nvim-colorizer.lua) | Inline color highlighting (maintained catgoose fork) |
 | [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) | Lua utility library (dependency) |
 
 > Note: nvim-treesitter is not installed. flutter-tools.nvim and
