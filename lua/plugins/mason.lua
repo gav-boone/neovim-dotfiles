@@ -11,7 +11,7 @@
 return {
   "williamboman/mason.nvim",
   lazy = false,
-  priority = 100, -- load before lspconfig/conform so their setup() finds it ready
+  priority = 100, -- load before lspconfig so its setup() finds mason ready
   build = ":MasonUpdate",
   cmd = {
     "Mason",
