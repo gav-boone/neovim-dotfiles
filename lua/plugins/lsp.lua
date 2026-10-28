@@ -16,6 +16,31 @@ return {
       -- Shared capabilities (enables completion via nvim-cmp)
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
+      -- Deterministic LSP formatting. When more than one attached client can
+      -- format a buffer, `vim.lsp.buf.format` would otherwise prompt or run
+      -- them all. We pick exactly one via an explicit preference per filetype,
+      -- so adding another formatting-capable server never causes a double
+      -- format or a chooser popup. Unknown filetypes just use whatever single
+      -- client advertises formatting.
+      local format_prefer = {
+        python = "ruff", -- ruff formats; basedpyright doesn't, but be explicit
+      }
+      _G._lsp_format = function(bufnr)
+        bufnr = bufnr or vim.api.nvim_get_current_buf()
+        local ft = vim.bo[bufnr].filetype
+        local preferred = format_prefer[ft]
+        vim.lsp.buf.format({
+          bufnr = bufnr,
+          timeout_ms = 2000,
+          filter = function(c)
+            if preferred then
+              return c.name == preferred
+            end
+            return true
+          end,
+        })
+      end
+
       -- Shared on_attach for keymaps. Attached via LspAttach autocmd below so
       -- it applies to every server regardless of how it's enabled.
       vim.api.nvim_create_autocmd("LspAttach", {
@@ -38,10 +63,32 @@ return {
           map("]d", function() vim.diagnostic.jump({ count = 1 }) end, "Next diagnostic")
           map("<leader>e", vim.diagnostic.open_float, "Show diagnostic")
 
-          -- ruff: let basedpyright own hover, disable ruff's.
+          -- Manual format via the attached LSP. `vim.lsp.buf.format` only asks
+          -- clients that advertise formatting capability, so this is a no-op
+          -- for servers that don't format. When several clients can format the
+          -- same buffer, `_lsp_format` picks one deterministically so you never
+          -- get a double-format or a chooser prompt.
+          map("<leader>f", function() _G._lsp_format(ev.buf) end, "Format buffer (LSP)")
+
           local client = vim.lsp.get_client_by_id(ev.data.client_id)
+
+          -- ruff: let basedpyright own hover, disable ruff's.
           if client and client.name == "ruff" then
             client.server_capabilities.hoverProvider = false
+          end
+
+          -- Format on save, driven entirely by the LSP. Any server installed
+          -- via Mason that supports textDocument/formatting participates
+          -- automatically — no per-server config needed. Servers that don't
+          -- advertise the capability are skipped.
+          if client and client:supports_method("textDocument/formatting") then
+            vim.api.nvim_create_autocmd("BufWritePre", {
+              group = vim.api.nvim_create_augroup("LspFormatOnSave." .. bufnr, { clear = true }),
+              buffer = bufnr,
+              callback = function()
+                _G._lsp_format(bufnr)
+              end,
+            })
           end
         end,
       })
@@ -119,8 +166,6 @@ return {
           exclude = { "pyright" },
         },
       })
-
-      -- Format on save is handled by conform.nvim (see below)
     end,
   },
 
