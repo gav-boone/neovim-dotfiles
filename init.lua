@@ -161,6 +161,8 @@ map("n", "<C-h>", "<C-w>h", { desc = "Move to left window" })
 map("n", "<C-j>", "<C-w>j", { desc = "Move to window below" })
 map("n", "<C-k>", "<C-w>k", { desc = "Move to window above" })
 map("n", "<C-l>", "<C-w>l", { desc = "Move to right window" })
+map("n", "<leader>v", "<C-w>v", { desc = "Split pane vertically" })
+map("n", "<leader>h", "<C-w>s", { desc = "Move to right window" })
 
 -- Move selected lines up/down
 map("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
@@ -255,13 +257,18 @@ vim.api.nvim_create_user_command("Build", function(args)
         -- adds ~2 s of Defender-scanned startup overhead for no benefit.
         run = { bash, "-c", cmd }
     end
+    local start = vim.loop.hrtime()
     local output = vim.fn.systemlist(run)
+    local elapsed = (vim.loop.hrtime() - start) / 1e9
     vim.fn.setqflist({}, " ", { title = "Build: " .. cmd, lines = output })
+
+    local took = string.format("%.2f", elapsed) .. "s"
+
     if vim.v.shell_error ~= 0 then
         vim.cmd("copen")
-        vim.notify("Build failed (exit " .. vim.v.shell_error .. ")", vim.log.levels.ERROR)
+        vim.notify("Build failed (exit " .. vim.v.shell_error .. ") in " .. took, vim.log.levels.ERROR)
     else
-        vim.notify("Build succeeded", vim.log.levels.INFO)
+        vim.notify("Build succeeded in " .. took, vim.log.levels.INFO)
     end
 end, {
     nargs = "*",
