@@ -24,8 +24,9 @@ return {
   config = function()
     require("mason").setup()
 
-    -- Make sure Mason's shim/bin directory is on PATH so installed servers,
-    -- linters and formatters can actually be launched.
+    -- Make sure Mason's shim/bin directory is on PATH so installed language
+    -- servers can actually be launched. Mason is for LSP only; formatting and
+    -- building come from the per-project .nvimproject file.
     local mason_bin = vim.fn.stdpath("data") .. "/mason/bin"
     if vim.fn.isdirectory(mason_bin) == 1 and not (vim.env.PATH or ""):find(mason_bin, 1, true) then
       vim.env.PATH = mason_bin .. (vim.fn.has("win32") == 1 and ";" or ":") .. vim.env.PATH
