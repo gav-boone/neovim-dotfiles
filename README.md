@@ -11,7 +11,7 @@ Personal Neovim config
 | [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) | Fuzzy finder |
 | [telescope-fzf-native](https://github.com/nvim-telescope/telescope-fzf-native.nvim) | FZF sorter for telescope |
 | [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) | LSP client configuration |
-| [mason.nvim](https://github.com/williamboman/mason.nvim) | LSP/tool installer |
+| [mason.nvim](https://github.com/williamboman/mason.nvim) | Language server installer (LSP only) |
 | [mason-lspconfig.nvim](https://github.com/williamboman/mason-lspconfig.nvim) | Bridge between mason and lspconfig |
 | [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) | Autocompletion engine |
 | [cmp-nvim-lsp](https://github.com/hrsh7th/cmp-nvim-lsp) | LSP completion source |
@@ -46,7 +46,9 @@ Leader key is `Space`.
 | `J` | v | Move selection down |
 | `K` | v | Move selection up |
 | `<leader>p` | v | Paste without overwriting register |
-| `<leader>b` | n | Run build command (`:Build`) |
+| `<leader>b` | n | Run the project `[build]` command (`:Build`) |
+| `<leader>f` | n | Run the project `[format]` command (`:Format`) |
+| `<leader>z` | n | Toggle diagnostics (`:Zen`, off by default) |
 
 ### Telescope (fuzzy finder)
 
@@ -113,7 +115,6 @@ Also available: `:Git` / `:G <command>` for any git operation.
 | `[d` | Previous diagnostic |
 | `]d` | Next diagnostic |
 
-`ruff`'s hover is disabled so `basedpyright` owns hover for Python.
 
 ### Completion (nvim-cmp, insert mode)
 
@@ -131,19 +132,6 @@ Also available: `:Git` / `:G <command>` for any git operation.
 Note: `<C-Space>` and `<C-d>` are also used in normal mode (window/scroll). No
 conflict — nvim-cmp bindings are insert-mode only.
 
-### Formatting (LSP)
-
-| Key | Mode | Action |
-|-----|------|--------|
-| `<leader>f` | n | Format buffer via the attached LSP |
-
-All formatting goes through the language server (`vim.lsp.buf.format`). Format on
-save is enabled for any attached server that advertises formatting capability
-(2000 ms timeout) — install a server via `:MasonInstall` and it participates
-automatically, no config needed. When more than one client can format a buffer,
-one is chosen deterministically (`format_prefer` in `lsp.lua`; e.g. `ruff` for
-Python) so there's no double-format or chooser prompt.
-
 ### Autopairs
 
 | Key | Mode | Action |
@@ -154,13 +142,42 @@ Python) so there's no double-format or chooser prompt.
 
 | Command | Action |
 |---------|--------|
-| `:Zen` | Toggle all in-editor diagnostics (virtual text, signs, underlines, floats) on/off |
-| `:Build [cmd]` | Run the configured build command; with an argument, set and run it. Output goes to the quickfix list (`:copen`). |
+| `:Zen` | Toggle in-editor diagnostics (virtual text, signs, underlines, floats). Off by default; also `<leader>z`. |
+| `:Build` | Run the `[build]` command from the project's `.nvimproject`. Output goes to the quickfix list (`:copen`). |
+| `:Format` | Run the `[format]` command from `.nvimproject` (saves the buffer first if modified). |
 | `:Theme [name]` | Switch color theme profile. Tab-completes `default`, `work`, `home`, `present`. No argument prints the current profile. |
 
-Configure the build command with `:Build make -j8` (inline, sticks for the session)
-or `:lua vim.g.build_cmd = "cargo build"`. `.sh` and `.nu` scripts are detected and
-run via bash / nu respectively. `<leader>b` runs `:Build` with the current command.
+## Project Commands (`.nvimproject`)
+
+Mason only installs language servers. Formatting and building are defined per
+project in a `.nvimproject` file at the project root (found by searching upward
+from the current file, or the cwd if the buffer has no file):
+
+```
+# comments start with # or ;
+[format] sh format.sh
+[build]  sh build.sh --o0
+```
+
+A command can also sit on the line after its header. Only the first command
+line of each section is used. Commands run with the project root as the working
+directory.
+
+- `<leader>b` / `:Build` runs `[build]` and puts its output in the quickfix list.
+  The list opens on failure.
+- `<leader>f` / `:Format` runs `[format]`.
+- Saving a buffer runs `[format]` automatically (after the write), then reloads
+  the file from disk. Like `:Build`, it reports how long the command took. In
+  `[format]`, `{file}` expands to the shell-escaped path of the current file.
+  A non-zero exit puts the output in the quickfix list.
+- Commands run exactly as written, with no script-type detection: through
+  `cmd.exe` on Windows and `sh` elsewhere. Be explicit (`sh build.sh`,
+  `nu build.nu`).
+- Projects without `.nvimproject`, or without the relevant section, are left
+  alone on save. `:Build` and `:Format` report what is missing.
+- The file can run arbitrary commands, so nvim asks you to trust it the first
+  time and again whenever it changes (`vim.secure.read`). `:trust` approves it
+  manually.
 
 ## Themes
 
@@ -180,18 +197,6 @@ off-white, opaque) tuned to stay legible in screenshots and screen shares. To
 add or change a profile, edit `themes.lua` — new entries appear in `:Theme`
 tab-completion automatically. The custom palettes live in
 `lua/plugins/colorscheme.lua`.
-
-## LSP Servers (auto-installed via Mason)
-
-| Server | Language |
-|--------|----------|
-| ts_ls | TypeScript / JavaScript |
-| lua_ls | Lua |
-| basedpyright | Python (types, completions, hover) |
-| ruff | Python (linting, formatting) |
-| clangd | C / C++ (query-driver pointed at MinGW toolchain) |
-
-`pyright` is explicitly excluded so it never attaches alongside `basedpyright`.
 
 ## Notable Options
 

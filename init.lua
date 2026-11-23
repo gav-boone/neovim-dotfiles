@@ -188,96 +188,24 @@ map("n", "<leader>q", "<cmd>q<CR>", { desc = "Quit window" })
 -- CUSTOM COMMANDS
 -- ============================================
 
--- :Zen — quiet all in-editor warnings/diagnostics.
--- Toggles LSP/diagnostic virtual text, signs, underlines, and floats off.
--- Run :Zen again to turn them back on.
+-- :Zen / <leader>z — toggle in-editor diagnostics (virtual text, signs,
+-- underlines, floats). They are OFF by default; run :Zen to turn them on and
+-- again to turn them off.
 do
-    local diagnostics_on = true
-    vim.api.nvim_create_user_command("Zen", function()
+    local diagnostics_on = false
+    vim.diagnostic.enable(false)
+    local function zen()
         diagnostics_on = not diagnostics_on
-        if diagnostics_on then
-            vim.diagnostic.enable()
-            vim.notify("Zen off — diagnostics enabled", vim.log.levels.INFO)
-        else
-            vim.diagnostic.enable(false)
-            vim.notify("Zen on — diagnostics quieted", vim.log.levels.INFO)
-        end
-    end, { desc = "Toggle all in-editor warnings/diagnostics" })
+        vim.diagnostic.enable(diagnostics_on)
+        vim.notify("Diagnostics " .. (diagnostics_on and "on" or "off"), vim.log.levels.INFO)
+    end
+    vim.api.nvim_create_user_command("Zen", zen, { desc = "Toggle in-editor diagnostics (off by default)" })
+    vim.keymap.set("n", "<leader>z", zen, { desc = "Toggle diagnostics (Zen)" })
 end
 
--- :Build — run your build script.
--- Configure the command it runs with :set (it's exposed as a global):
---     :lua vim.g.build_cmd = "cargo build"
--- or set it inline for this session by passing an argument:
---     :Build make -j8
--- With no argument, :Build runs whatever vim.g.build_cmd is set to.
-vim.g.build_cmd = vim.g.build_cmd
-vim.api.nvim_create_user_command("Build", function(args)
-    local cmd = args.args
-    if cmd ~= nil and cmd ~= "" then
-        -- Inline argument: set it as the new default and run it.
-        vim.g.build_cmd = cmd
-    else
-        cmd = vim.g.build_cmd
-    end
-
-    if cmd == nil or cmd == "" then
-        vim.notify(
-            "No build command set. Use :Build <cmd> or :lua vim.g.build_cmd = '<cmd>'",
-            vim.log.levels.ERROR
-        )
-        return
-    end
-
-    vim.notify("Building: " .. cmd, vim.log.levels.INFO)
-    -- Run the build and send output to the quickfix list so errors are
-    -- navigable with :copen and ]q / [q.
-    --
-    -- &shell is pinned to cmd.exe (so plugin/git subprocesses don't break on
-    -- the MSYS bash in this environment). cmd.exe can't execute shell scripts,
-    -- so if the build command is (or starts with) a .sh script, run it through
-    -- bash explicitly instead of the default shell.
-    local run = cmd
-    local nu_script = cmd:match("^%s*%.?/?[%w_%-./]+%.nu") or cmd:match("%.nu%s*$")
-    local sh_script = cmd:match("^%s*%.?/?[%w_%-./]+%.sh") or cmd:match("%.sh%s*$")
-    if nu_script then
-        local nu = vim.fn.exepath("nu")
-        if nu == "" then
-            nu = "C:/Users/gboone/AppData/Local/Programs/nu/bin/nu.exe"
-        end
-        run = { nu, cmd }
-    elseif sh_script then
-        local bash = vim.fn.exepath("bash")
-        if bash == "" then
-            bash = "C:/Program Files/Git/usr/bin/bash.exe"
-        end
-        -- Invoke via bash -c. Login shell (-l) is not needed: nvim inherits
-        -- PATH from the launching shell (nushell/env.nu), which already has
-        -- clang, mingw64, node, etc. Using -l sources /etc/profile.d/*.sh and
-        -- adds ~2 s of Defender-scanned startup overhead for no benefit.
-        run = { bash, "-c", cmd }
-    end
-    local start = vim.loop.hrtime()
-    local output = vim.fn.systemlist(run)
-    local elapsed = (vim.loop.hrtime() - start) / 1e9
-    vim.fn.setqflist({}, " ", { title = "Build: " .. cmd, lines = output })
-
-    local took = string.format("%.2f", elapsed) .. "s"
-
-    if vim.v.shell_error ~= 0 then
-        vim.cmd("copen")
-        vim.notify("Build failed (exit " .. vim.v.shell_error .. ") in " .. took, vim.log.levels.ERROR)
-    else
-        vim.notify("Build succeeded in " .. took, vim.log.levels.INFO)
-    end
-end, {
-    nargs = "*",
-    complete = "shellcmd",
-    desc = "Run the configured build script (set via vim.g.build_cmd or :Build <cmd>)",
-})
-
--- <leader>b — run :Build with the configured build command.
-map("n", "<leader>b", "<cmd>Build<CR>", { desc = "Run build command" })
+-- :Build / :Format, <leader>b, <leader>f and format-on-save.
+-- Commands come from a per-project .nvimproject file (see lua/config/project.lua).
+require("config.project").setup()
 
 -- ============================================
 -- DIAGNOSTICS DISPLAY
